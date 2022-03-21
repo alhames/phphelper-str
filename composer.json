@@ -1,0 +1,30 @@
+{
+  "name": "alhames/phphelper-str",
+  "type": "library",
+  "description": "PHP Helpers for Strings",
+  "homepage": "https://github.com/alhames/phphelper-str",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Pavel Logachev",
+      "email": "alhames@mail.ru",
+      "homepage": "https://alhames.ru/"
+    }
+  ],
+  "require": {
+    "php": "^7.1",
+    "ext-mbstring": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7.5",
+    "symfony/yaml": "^4.4 || ^5.0"
+  },
+  "support": {
+    "issues": "https://github.com/alhames/phphelper-str/issues"
+  },
+  "autoload": {
+    "psr-4": {
+      "PhpHelper\\": ""
+    }
+  }
+}
