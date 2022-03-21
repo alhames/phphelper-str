@@ -3,84 +3,19 @@
 namespace PhpHelper\Tests;
 
 use PhpHelper\Str;
+use PHPUnit\Framework\TestCase;
 
-/**
- * Class StrTest.
- */
-class StrTest extends \PHPUnit\Framework\TestCase
+class StrTest extends TestCase
 {
     /**
-     * @dataProvider charProvider
-     *
-     * @param int   $code
-     * @param mixed $char
-     */
-    public function testOrd($code, $char)
-    {
-        $this->assertSame($code, Str::ord($char));
-    }
-
-    /**
-     * @dataProvider charProvider
-     *
-     * @param int   $code
-     * @param mixed $char
-     */
-    public function testChr($code, $char)
-    {
-        $this->assertSame($char, Str::chr($code));
-    }
-
-    /**
-     * @return array
-     */
-    public function charProvider()
-    {
-        $chars = [];
-
-        for ($i = 0; $i < 128; ++$i) {
-            $chars[] = [$i, \chr($i)];
-        }
-
-        return array_merge($chars, [
-            [0, "\0"],
-            [0x9, "\t"],
-            [0xA, "\n"],
-            [0xD, "\r"],
-
-            [0xA9, '©'],
-            [0xC0, 'À'],
-            [0xF7, '÷'],
-            [0x190, 'Ɛ'],
-            [0x3BC, 'μ'],
-            [0x410, 'А'],
-            [0x44B, 'ы'],
-            [0x58D, '֍'],
-            [0x1D6B, 'ᵫ'],
-            [0x2211, '∑'],
-            [0x22C5, '⋅'],
-            [0x263A, '☺'],
-            [0x2F65, '⽥'],
-            [0x3576, '㕶'],
-        ]);
-    }
-
-    /**
      * @dataProvider filterProvider
-     *
-     * @param string $expected
-     * @param string $string
-     * @param int    $options
      */
-    public function testFilter($string, $expected, $options = Str::FILTER_TEXT)
+    public function testFilter(string $string, string $expected, int $options = Str::FILTER_TEXT): void
     {
         $this->assertSame($expected, Str::filter($string, $options));
     }
 
-    /**
-     * @return array
-     */
-    public function filterProvider()
+    public function filterProvider(): array
     {
         return [
             ['Hello world!', 'Hello world!'],
@@ -109,20 +44,13 @@ class StrTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider slugProvider
-     *
-     * @param string $string
-     * @param string $slug
-     * @param string $characters
      */
-    public function testSlugify($string, $slug, $characters = '')
+    public function testSlugify(string $string, string $slug, string $characters = ''): void
     {
         $this->assertSame($slug, Str::slugify($string, $characters));
     }
 
-    /**
-     * @return array
-     */
-    public function slugProvider()
+    public function slugProvider(): array
     {
         return [
             ['абв', 'abv'],
@@ -137,7 +65,7 @@ class StrTest extends \PHPUnit\Framework\TestCase
         ];
     }
 
-    public function testGetRandomString()
+    public function testGetRandomString(): void
     {
         $randomStrings = [];
         for ($i = 0; $i < 10000; ++$i) {
@@ -150,30 +78,21 @@ class StrTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider validUrlProvider
-     *
-     * @param string $url
-     * @param bool   $requiredScheme
      */
-    public function testIsUrl($url, $requiredScheme = false)
+    public function testIsUrl(string $url, bool $requiredScheme = false): void
     {
         $this->assertTrue(Str::isUrl($url, $requiredScheme), 'Failed: '.$url);
     }
 
     /**
      * @dataProvider invalidUrlProvider
-     *
-     * @param string $url
-     * @param bool   $requiredScheme
      */
-    public function testIsUrlInvalid($url, $requiredScheme = false)
+    public function testIsUrlInvalid(string $url, bool $requiredScheme = false): void
     {
         $this->assertFalse(Str::isUrl($url, $requiredScheme));
     }
 
-    /**
-     * @return array
-     */
-    public function validUrlProvider()
+    public function validUrlProvider(): array
     {
         return [
             ['google.com'],
@@ -197,10 +116,7 @@ class StrTest extends \PHPUnit\Framework\TestCase
         ];
     }
 
-    /**
-     * @return array
-     */
-    public function invalidUrlProvider()
+    public function invalidUrlProvider(): array
     {
         return [
             ['google.com', true],
@@ -221,19 +137,13 @@ class StrTest extends \PHPUnit\Framework\TestCase
      * @see https://habrahabr.ru/post/318698/
      *
      * @dataProvider emailProvider
-     *
-     * @param string $email
-     * @param bool   $result
      */
-    public function testIsEmail($email, $result)
+    public function testIsEmail(string $email, bool $result): void
     {
         $this->assertSame($result, Str::isEmail($email), 'Failed: '.$email);
     }
 
-    /**
-     * @return array
-     */
-    public function emailProvider()
+    public function emailProvider(): array
     {
         return [
             // valid emails
@@ -265,53 +175,7 @@ class StrTest extends \PHPUnit\Framework\TestCase
         ];
     }
 
-    public function testIsHash()
-    {
-        $this->assertTrue(Str::isHash(md5('test')));
-        $this->assertTrue(Str::isHash('1234567890abcdef', 16));
-        $this->assertFalse(Str::isHash('1234567890abcdef'));
-        $this->assertTrue(Str::isHash('abc', 3));
-        $this->assertTrue(Str::isHash(123, 3));
-        $this->assertFalse(Str::isHash('xyz', 3));
-        $this->assertTrue(Str::isHash(0xFF, 3));
-        $this->assertFalse(Str::isHash(['array']));
-    }
-
-    /**
-     * @dataProvider packProvider
-     *
-     * @param mixed $var
-     */
-    public function testPack($var)
-    {
-        $packed = Str::pack($var);
-        $unpacked = Str::unpack($packed);
-        $compressed = Str::pack($var, true);
-        $uncompressed = Str::unpack($compressed, true);
-
-        $this->assertEquals($var, $unpacked);
-        $this->assertEquals($var, $uncompressed);
-    }
-
-    /**
-     * @return array
-     */
-    public function packProvider()
-    {
-        $object = new \stdClass();
-        $object->property = Str::getRandomString();
-
-        return [
-            [Str::getRandomString()],
-            [[mt_rand(1, 999), mt_rand(1, 999), mt_rand(1, 999)]],
-            [$object],
-            [null],
-            [mt_rand(1, 999)],
-            [mt_rand(1, 9) / 10],
-        ];
-    }
-
-    public function testPad()
+    public function testPad(): void
     {
         $this->assertSame('абв   ', Str::pad('абв', 6));
         $this->assertSame('   абв', Str::pad('абв', 6, ' ', STR_PAD_LEFT));
@@ -323,20 +187,13 @@ class StrTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider caseProvider
-     *
-     * @param $string
-     * @param $expected
-     * @param $convention
      */
-    public function testConvertCase($string, $expected, $convention)
+    public function testConvertCase(string $string, string $expected, int $convention): void
     {
         $this->assertSame($expected, Str::convertCase($string, $convention));
     }
 
-    /**
-     * @return array
-     */
-    public function caseProvider()
+    public function caseProvider(): array
     {
         $strings = [
             //   source           camelCase       CamelCase       snake_case        SNAKE_CASE        kebab-case        Kebab-Case
@@ -385,7 +242,7 @@ class StrTest extends \PHPUnit\Framework\TestCase
         return $data;
     }
 
-    public function testGetShortClassName()
+    public function testGetShortClassName(): void
     {
         $strObject = new Str();
         $this->assertSame('Str', Str::getShortClassName($strObject));

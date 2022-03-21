@@ -9,26 +9,22 @@ namespace PhpHelper;
  */
 class Str
 {
-    const EOL = "\n";
+    public const FILTER_TEXT = 0b000001;
+    public const FILTER_HTML = 0b000010;
+    public const FILTER_CODE = 0b000100;
+    public const FILTER_PUNCTUATION = 0b001000;
+    public const FILTER_SPACE = 0b010000;
 
-    const FILTER_TEXT = 0b000001;
-    const FILTER_HTML = 0b000010;
-    const FILTER_CODE = 0b000100;
-    const FILTER_PUNCTUATION = 0b001000;
-    const FILTER_SPACE = 0b010000;
+    public const CASE_CAMEL_LOWER = 0b01100;
+    public const CASE_CAMEL_UPPER = 0b00100;
+    public const CASE_SNAKE_LOWER = 0b00010;
+    public const CASE_SNAKE_UPPER = 0b10010;
+    public const CASE_KEBAB_LOWER = 0b00011;
+    public const CASE_KEBAB_UPPER = 0b00111;
 
-    const CASE_CAMEL_LOWER = 0b01100;
-    const CASE_CAMEL_UPPER = 0b00100;
-    const CASE_SNAKE_LOWER = 0b00010;
-    const CASE_SNAKE_UPPER = 0b10010;
-    const CASE_KEBAB_LOWER = 0b00011;
-    const CASE_KEBAB_UPPER = 0b00111;
+    protected static string $filterCodeFormat = "[%%%'04X]";
 
-    /** @var string */
-    protected static $filterCodeFormat = "[%%%'04X]";
-
-    /** @var array */
-    protected static $slugifyTransliteration = [
+    protected static array $slugifyTransliteration = [
         'а' => 'a',
         'б' => 'b',
         'в' => 'v',
@@ -65,17 +61,13 @@ class Str
         "'" => '',
     ];
 
-    /** @var string */
-    protected static $slugifyPlaceholder = '_';
+    protected static string $slugifyPlaceholder = '_';
 
-    /** @var string */
-    protected static $emailPattern = '/^[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/';
+    protected static string $emailPattern = '/^[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/';
 
-    /** @var string */
-    protected static $interpolatePattern = '{%s}';
+    protected static string $interpolatePattern = '{%s}';
 
-    /** @var array */
-    protected static $romanNumerals = [
+    protected static array $romanNumerals = [
         '1000' => 'M',
         '900' => 'CM',
         '500' => 'D',
@@ -91,36 +83,6 @@ class Str
         '1' => 'I',
     ];
 
-    /**
-     * @param string $char
-     *
-     * @return int
-     */
-    public static function ord(string $char): int
-    {
-        $char = mb_convert_encoding($char, 'UTF-32BE', 'UTF-8');
-
-        return (int) unpack('Ncode', $char)['code'];
-    }
-
-    /**
-     * @param int $code
-     *
-     * @return string
-     */
-    public static function chr(int $code): string
-    {
-        $char = pack('N', $code);
-
-        return (string) mb_convert_encoding($char, 'UTF-8', 'UTF-32BE');
-    }
-
-    /**
-     * @param string $string
-     * @param int    $options
-     *
-     * @return string
-     */
     public static function filter(string $string, int $options = self::FILTER_TEXT): string
     {
         // 09: Horizontal Tabulation (\t)
@@ -135,7 +97,7 @@ class Str
             return preg_replace_callback(
                 '#[^\x20-\x7E\x{400}-\x{45F}]#u',
                 function ($data) {
-                    return sprintf(static::$filterCodeFormat, static::ord($data[0]));
+                    return sprintf(static::$filterCodeFormat, mb_ord($data[0]));
                 },
                 $string
             );
@@ -156,7 +118,7 @@ class Str
             $string = preg_replace_callback(
                 '#[^\n\t\x20-\x7E\x{400}-\x{45F}]#u',
                 function ($data) {
-                    return '&#'.static::ord($data[0]).';';
+                    return '&#'.mb_ord($data[0]).';';
                 },
                 $string
             );
@@ -170,11 +132,6 @@ class Str
         return $string;
     }
 
-    /**
-     * @param string $string
-     *
-     * @return string
-     */
     public static function filterPunctuation(string $string): string
     {
         $string = preg_replace('#[\x{2010}-\x{2015}\x{2053}]#u', '-', $string);
@@ -185,11 +142,6 @@ class Str
         return $string;
     }
 
-    /**
-     * @param string $title
-     *
-     * @return string
-     */
     public static function filterTitle(string $title): string
     {
         $title = html_entity_decode($title);
@@ -200,14 +152,7 @@ class Str
         return trim($title);
     }
 
-    /**
-     * @param string      $string
-     * @param string|null $characters
-     * @param string|null $placeholder
-     *
-     * @return string
-     */
-    public static function slugify(string $string, string $characters = null, string $placeholder = null): string
+    public static function slugify(string $string, ?string $characters = null, ?string $placeholder = null): string
     {
         $placeholder = $placeholder ?: static::$slugifyPlaceholder;
         $pattern = '#[^a-z0-9'.preg_quote($characters.$placeholder, '#').']+#';
@@ -220,12 +165,6 @@ class Str
         return trim($string, $placeholder);
     }
 
-    /**
-     * @param int    $length
-     * @param string $characters
-     *
-     * @return string
-     */
     public static function getRandomString(int $length = 32, string $characters = 'qwertyuiopasdfghjklzxcvbnm0123456789'): string
     {
         $max = mb_strlen($characters, 'utf-8') - 1;
@@ -240,8 +179,7 @@ class Str
 
     /**
      * Generate an URI safe base64 encoded token that does not contain "+",
-     * "/" or "=" which need to be URL encoded and make URLs unnecessarily
-     * longer.
+     * "/" or "=" which need to be URL encoded and make URLs unnecessarily longer.
      *
      * @see https://github.com/symfony/security-csrf/blob/4.1/TokenGenerator/UriSafeTokenGenerator.php
      *
@@ -256,12 +194,6 @@ class Str
         return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
     }
 
-    /**
-     * @param string $url
-     * @param bool   $requiredScheme
-     *
-     * @return bool
-     */
     public static function isUrl(string $url, bool $requiredScheme = false): bool
     {
         $pattern = '#^'.($requiredScheme ? 'https?://' : '((https?:)?//)?').'[a-z0-9]([-a-z0-9\.]*[a-z0-9])?\.[a-z]{2,10}(:\d{1,5})?(/.*)?$#i';
@@ -271,75 +203,12 @@ class Str
 
     /**
      * @see http://www.regular-expressions.info/email.html
-     *
-     * @param string $email
-     *
-     * @return bool
      */
     public static function isEmail(string $email): bool
     {
         return preg_match(static::$emailPattern, $email);
     }
 
-    /**
-     * @param string|int $hash
-     * @param int        $length
-     *
-     * @return bool
-     */
-    public static function isHash($hash, int $length = 32): bool
-    {
-        return (\is_string($hash) || \is_int($hash)) && preg_match('#^[0-9a-f]{'.$length.'}$#i', $hash);
-    }
-
-    /**
-     * @param mixed|null $data
-     * @param bool       $compressed
-     *
-     * @return string|null
-     */
-    public static function pack($data, bool $compressed = false)
-    {
-        if (null === $data) {
-            return $data;
-        }
-
-        $packedData = serialize($data);
-
-        if ($compressed) {
-            $packedData = gzencode($packedData, 9, FORCE_GZIP);
-        }
-
-        return $packedData;
-    }
-
-    /**
-     * @param string|null $data
-     * @param bool        $compressed
-     *
-     * @return mixed|null
-     */
-    public static function unpack($data, bool $compressed = false)
-    {
-        if (null === $data) {
-            return $data;
-        }
-
-        if ($compressed) {
-            $data = gzdecode($data);
-        }
-
-        return unserialize($data);
-    }
-
-    /**
-     * @param string $input
-     * @param int    $length
-     * @param string $string
-     * @param int    $type
-     *
-     * @return string
-     */
     public static function pad(string $input, int $length, string $string = ' ', int $type = STR_PAD_RIGHT): string
     {
         $diff = \strlen($input) - mb_strlen($input, 'utf-8');
@@ -349,11 +218,6 @@ class Str
 
     /**
      * @see https://en.wikipedia.org/wiki/Naming_convention_(programming)
-     *
-     * @param string $string
-     * @param int    $convention
-     *
-     * @return string
      */
     public static function convertCase(string $string, int $convention): string
     {
@@ -398,8 +262,6 @@ class Str
      * @see http://stackoverflow.com/a/27457689/1378653
      *
      * @param string|object $class
-     *
-     * @return string
      */
     public static function getShortClassName($class): string
     {
@@ -410,47 +272,23 @@ class Str
         return substr(strrchr($class, '\\'), 1);
     }
 
-    /**
-     * Interpolates context values into the message placeholders.
-     *
-     * @param string $message
-     * @param array  $context
-     *
-     * @return string
-     */
-    public static function interpolate(string $message, array $context): string
+    public static function interpolate(string $template, array $context): string
     {
         $replace = [];
         foreach ($context as $key => $value) {
             $replace[sprintf(static::$interpolatePattern, $key)] = $value;
         }
 
-        return strtr($message, $replace);
+        return strtr($template, $replace);
     }
 
-    /**
-     * @see http://www.php-fig.org/psr/psr-6/
-     *
-     * @param string $key
-     *
-     * @return string
-     */
-    public static function filterCacheKey(string $key): string
-    {
-        $key = preg_replace('#[/-]#', '.', $key);
-        $key = preg_replace('#[^A-Za-z0-9_\.]#', '_', $key);
-
-        return strtolower($key);
-    }
-
-    /**
-     * @param int $number
-     *
-     * @return string
-     */
     public static function intToRoman(int $number): string
     {
-        if ($number > 4999) {
+        if (0 === $number) {
+            return 'N';
+        }
+
+        if ($number > 4999 || $number < 0) {
             return (string) $number;
         }
 
